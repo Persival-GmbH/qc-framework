@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  build-linux:
+  build-and-run:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
@@ -49,10 +49,6 @@ jobs:
           echo Done.
         shell: bash
 
-  run-module:
-    runs-on: ubuntu-22.04
-    needs: build-linux
-    steps:
       - name: Run GithubCIReport
         run: ./build/bin/GithubCIReport examples/viewer_example/resources/Result.xqar
         shell: bash
