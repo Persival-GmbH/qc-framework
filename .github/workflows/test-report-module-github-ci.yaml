@@ -48,9 +48,10 @@ jobs:
           cmake --install ./build
           echo Done.
         shell: bash
-        
+
   run-module:
     runs-on: ubuntu-22.04
+    needs: build-linux
     steps:
       - name: Run GithubCIReport
         run: ./build/bin/GithubCIReport examples/viewer_example/resources/Result.xqar
