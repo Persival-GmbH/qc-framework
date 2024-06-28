@@ -1,4 +1,4 @@
-name: Build framework on Linux Bare
+name: Test Report Module GitHub CI
 
 on:
   # execute on every PR
