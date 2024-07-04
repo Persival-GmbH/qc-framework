@@ -25,17 +25,14 @@
 
 XERCES_CPP_NAMESPACE_USE
 
-const char BASIC_SEPARATOR_LINE[] =
-    "====================================================================================================\n";
-
-static std::map<eIssueLevel, std::string> mapIssueLevelToString = {{eIssueLevel::INFO_LVL, "::notice::"},
+static const std::map<eIssueLevel, std::string> mapIssueLevelToString = {{eIssueLevel::INFO_LVL, "::notice::"},
                                                                    {eIssueLevel::WARNING_LVL, "::warning::"},
                                                                    {eIssueLevel::ERROR_LVL, "::error::"}};
 
 // Main Programm
 int main(int argc, char *argv[])
 {
-    std::string strToolpath = argv[0];
+    const std::string strToolpath(argv[0]);
 
     if (argc != 2)
     {
@@ -59,7 +56,7 @@ int main(int argc, char *argv[])
 
     if (StringEndsWith(ToLower(strFilepath), ".xqar"))
     {
-        if (stat(strFilepath.c_str(), &fileStatus) == -1) // ==0 ok; ==-1 error
+        if (!std::filesystem::exists(strFilepath.c_str()))
         {
             std::cerr << "Could not open file '" << strFilepath << "'!" << std::endl
                       << "Abort generating report!" << std::endl;
@@ -131,7 +128,7 @@ bool RunGithubCIReport(const cParameterContainer &inputParams)
 {
     XMLPlatformUtils::Initialize();
 
-    auto *pResultContainer = new cResultContainer();
+    auto pResultContainer = std::make_unique<cResultContainer>();
 
     bool error_found;
 
@@ -142,11 +139,10 @@ bool RunGithubCIReport(const cParameterContainer &inputParams)
         pResultContainer->AddResultsFromXML(inputParams.GetParam("strInputFile"));
 
         // Add prefix with issue id
-        std::list<cCheckerBundle *> checkerBundles = pResultContainer->GetCheckerBundles();
-        for (auto itCheckerBundles = checkerBundles.cbegin();
-             itCheckerBundles != checkerBundles.end(); itCheckerBundles++)
+        const std::list<cCheckerBundle *> checkerBundles = pResultContainer->GetCheckerBundles();
+        for (auto checkerBundle:  checkerBundles)
         {
-            (*itCheckerBundles)->DoProcessing(AddPrefixForDescriptionIssueProcessor);
+            checkerBundle->DoProcessing(AddPrefixForDescriptionIssueProcessor);
         }
 
         error_found = PrintResults(pResultContainer);
@@ -155,48 +151,46 @@ bool RunGithubCIReport(const cParameterContainer &inputParams)
     {
     }
 
-    pResultContainer->Clear();
-    delete pResultContainer;
-
     XMLPlatformUtils::Terminate();
 
     return error_found;
 }
 
 // Prints results in GitHub CI format
-bool PrintResults(cResultContainer *ptrResultContainer)
+bool PrintResults(std::unique_ptr<cResultContainer> &pResultContainer)
 {
-    if (!ptrResultContainer->HasCheckerBundles())
+    if (!pResultContainer->HasCheckerBundles())
         return false;
 
     bool error_found = false;
 
-    std::list<cCheckerBundle *> bundles = ptrResultContainer->GetCheckerBundles();
-    std::list<cChecker *> checkers;
-    std::list<cIssue *> issues;
-
+    std::list<cCheckerBundle *> bundles = pResultContainer->GetCheckerBundles();
     // Loop over all checker bundles
     for (auto & bundle : bundles)
     {
-        checkers = bundle->GetCheckers();
+        const auto checkers = bundle->GetCheckers();
 
         // Iterate over all checkers
         for (auto & checker : checkers)
         {
             // Get all issues from the current checker
-            issues = checker->GetIssues();
+            const auto issues = checker->GetIssues();
             if (!issues.empty())
             {
                 for (auto & issue : issues)
                 {
-                    std::cout << mapIssueLevelToString[issue->GetIssueLevel()]
-                              << checker->GetCheckerID()
-                              << ": "
-                              << issue->GetDescription()
-                              << std::endl;
-                    if (issue->GetIssueLevel() == eIssueLevel::ERROR_LVL)
+                    auto issue_level = mapIssueLevelToString.find(issue->GetIssueLevel());
+                    if (issue_level != mapIssueLevelToString.end())
                     {
-                        error_found = true;
+                        std::cout << issue_level->second
+                                  << checker->GetCheckerID()
+                                  << ": "
+                                  << issue->GetDescription()
+                                  << std::endl;
+                        if (issue->GetIssueLevel() == eIssueLevel::ERROR_LVL)
+                        {
+                            error_found = true;
+                        }
                     }
                 }
             }
