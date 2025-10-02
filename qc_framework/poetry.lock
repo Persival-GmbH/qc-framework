@@ -30,8 +30,8 @@ pydantic-xml = "^2.11.0"
 [package.source]
 type = "git"
 url = "https://github.com/asam-ev/qc-baselib-py.git"
-reference = "main"
-resolved_reference = "bdc59f8f3adc1c134a2f103cee65ad326cd25136"
+reference = "v1.1.0-rc.1"
+resolved_reference = "66bcc758b304a01344f9733c8f90854233573382"
 
 [[package]]
 name = "black"
@@ -624,4 +624,4 @@ typing-extensions = ">=4.12.0"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "c3fd5a5da11c9f0ea92a05918955fbb98efd290eaf7812181d35018fe31c9011"
+content-hash = "233e4523e840646c3f10679a36436dab3d8e1002484d67cfba81b024e713b0aa"
